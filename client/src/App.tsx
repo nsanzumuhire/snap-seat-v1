@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Menu from "@/pages/menu";
 import Order from "@/pages/order";
 import Reviews from "@/pages/reviews";
+import Dining from "@/pages/dining";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
@@ -14,6 +15,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/dining" component={Dining} />
       <Route path="/menu" component={Menu} />
       <Route path="/order" component={Order} />
       <Route path="/reviews" component={Reviews} />
