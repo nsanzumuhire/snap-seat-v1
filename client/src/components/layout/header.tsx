@@ -13,11 +13,11 @@ export default function Header() {
           </div>
 
           <nav className="hidden md:flex space-x-8">
-            <Link href="/dining">
-              <a className="text-gray-600 hover:text-gray-900">Dining</a>
+            <Link href="/restaurants">
+              <a className="text-gray-600 hover:text-gray-900">Find Restaurants</a>
             </Link>
             <Link href="/menu">
-              <a className="text-gray-600 hover:text-gray-900">Menu</a>
+              <a className="text-gray-600 hover:text-gray-900">Popular Menus</a>
             </Link>
             <Link href="/reviews">
               <a className="text-gray-600 hover:text-gray-900">Reviews</a>
