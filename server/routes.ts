@@ -9,7 +9,84 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 
+// Sample menu items for demonstration
+const sampleMenuItems = [
+  {
+    name: "Classic Caesar Salad",
+    description: "Crisp romaine lettuce, garlic croutons, parmesan cheese, and our house-made Caesar dressing",
+    price: "14.99",
+    category: "Starters",
+    imageUrl: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9",
+    available: 1
+  },
+  {
+    name: "Pan-Seared Scallops",
+    description: "Fresh sea scallops with citrus butter sauce and micro greens",
+    price: "19.99",
+    category: "Starters",
+    imageUrl: "https://images.unsplash.com/photo-1599021456807-4962c743a24f",
+    available: 1
+  },
+  {
+    name: "Grilled Ribeye Steak",
+    description: "12oz premium ribeye with roasted garlic butter and seasonal vegetables",
+    price: "39.99",
+    category: "Main Course",
+    imageUrl: "https://images.unsplash.com/photo-1558030006-450675393462",
+    available: 1
+  },
+  {
+    name: "Pan-Seared Salmon",
+    description: "Fresh Atlantic salmon with lemon herb sauce and quinoa pilaf",
+    price: "32.99",
+    category: "Main Course",
+    imageUrl: "https://images.unsplash.com/photo-1467003909585-2f8a72700288",
+    available: 1
+  },
+  {
+    name: "Chocolate Lava Cake",
+    description: "Warm chocolate cake with a molten center, served with vanilla ice cream",
+    price: "12.99",
+    category: "Desserts",
+    imageUrl: "https://images.unsplash.com/photo-1617455559706-fa196228c05d",
+    available: 1
+  },
+  {
+    name: "Crème Brûlée",
+    description: "Classic vanilla bean custard with caramelized sugar crust",
+    price: "10.99",
+    category: "Desserts",
+    imageUrl: "https://images.unsplash.com/photo-1470324161839-ce2bb6fa6bc3",
+    available: 1
+  },
+  {
+    name: "Signature Martini",
+    description: "Premium vodka or gin with your choice of olive or twist",
+    price: "14.99",
+    category: "Drinks",
+    imageUrl: "https://images.unsplash.com/photo-1575023782549-62ca0d244b39",
+    available: 1
+  },
+  {
+    name: "Craft Beer Selection",
+    description: "Rotating selection of local and imported craft beers",
+    price: "8.99",
+    category: "Drinks",
+    imageUrl: "https://images.unsplash.com/photo-1584225064785-c62a8b43d148",
+    available: 1
+  }
+];
+
 export async function registerRoutes(app: Express) {
+  // Initialize sample menu items
+  for (const item of sampleMenuItems) {
+    try {
+      await storage.createMenuItem(item);
+    } catch (error) {
+      console.error("Failed to create menu item:", error);
+    }
+  }
+
   // Waitlist routes
   app.post("/api/waitlist", async (req, res) => {
     try {
