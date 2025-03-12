@@ -243,7 +243,7 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
               <Button
                 className="w-full"
                 onClick={handleSubmitOrder}
-                disabled={!tableNumber}
+                disabled={state.items.length === 0}
               >
                 <Send className="mr-2 h-4 w-4" />
                 Submit Order
