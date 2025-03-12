@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useTableOrder } from "@/lib/tableOrderContext";
 import { Table } from "lucide-react";

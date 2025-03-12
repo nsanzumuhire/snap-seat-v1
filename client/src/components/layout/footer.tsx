@@ -1,4 +1,5 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import React from 'react';
 
 export default function Footer() {
   return (
