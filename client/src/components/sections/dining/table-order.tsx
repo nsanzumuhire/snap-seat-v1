@@ -25,6 +25,7 @@ import {
   Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Separator from "@/components/ui/separator";
 
 type TableOrderProps = {
   embedded?: boolean;
@@ -117,46 +118,45 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
             </div>
             {state.items.length > 0 ? (
               <div className="mt-6 space-y-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-lg font-semibold">
+                <Card className="mt-1">
+                  <CardContent className="p-2">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
                         <span>Total</span>
                         <span>${state.total.toFixed(2)}</span>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {state.items.reduce((total, item) => total + item.quantity, 0)} items
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Tax (10%)</span>
+                        <span>${(state.total * 0.1).toFixed(2)}</span>
+                      </div>
+                      <Separator className="my-0.5" />
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span>Order Total</span>
+                        <span>${(state.total * 1.1).toFixed(2)}</span>
                       </div>
                     </div>
                   </CardContent>
+                  <CardFooter className="px-2 py-1.5 flex gap-1">
+                    <Button
+                      size="sm"
+                      className="w-full text-xs py-0 h-6"
+                      onClick={handleSubmitOrder}
+                      disabled={state.items.length === 0}
+                    >
+                      <Send className="mr-1 h-3 w-3" />
+                      Submit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs py-0 h-6"
+                      onClick={() => dispatch({ type: "CLEAR_ORDER" })}
+                    >
+                      Clear
+                    </Button>
+                  </CardFooter>
                 </Card>
 
-                <div className="grid gap-4">
-                  <Button
-                    className="w-full"
-                    onClick={handleSubmitOrder}
-                    disabled={state.items.length === 0}
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    Submit Order
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => dispatch({ type: "CLEAR_ORDER" })}
-                  >
-                    Clear Order
-                  </Button>
-                  <Button
-                    asChild
-                    variant="default"
-                    className="w-full"
-                  >
-                    <Link href="/restaurants/1/payment">
-                      Proceed to Payment
-                    </Link>
-                  </Button>
-                </div>
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
@@ -220,48 +220,44 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
           </AnimatePresence>
         </div>
         {state.items.length > 0 ? (
-          <div className="mt-6 space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Total</span>
-                    <span>${state.total.toFixed(2)}</span>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {state.items.reduce((total, item) => total + item.quantity, 0)} items
-                  </div>
+          <Card className="mt-1">
+            <CardContent className="p-2">
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span>Total</span>
+                  <span>${state.total.toFixed(2)}</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-4">
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Tax (10%)</span>
+                  <span>${(state.total * 0.1).toFixed(2)}</span>
+                </div>
+                <Separator className="my-0.5" />
+                <div className="flex justify-between text-xs font-semibold">
+                  <span>Order Total</span>
+                  <span>${(state.total * 1.1).toFixed(2)}</span>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="px-2 py-1.5 flex gap-1">
               <Button
-                className="w-full"
+                size="sm"
+                className="w-full text-xs py-0 h-6"
                 onClick={handleSubmitOrder}
                 disabled={state.items.length === 0}
               >
-                <Send className="mr-2 h-4 w-4" />
-                Submit Order
+                <Send className="mr-1 h-3 w-3" />
+                Submit
               </Button>
               <Button
+                size="sm"
                 variant="outline"
-                className="w-full"
+                className="w-full text-xs py-0 h-6"
                 onClick={() => dispatch({ type: "CLEAR_ORDER" })}
               >
-                Clear Order
+                Clear
               </Button>
-              <Button
-                asChild
-                variant="default"
-                className="w-full"
-              >
-                <Link href="/restaurants/1/payment">
-                  Proceed to Payment
-                </Link>
-              </Button>
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
         ) : (
           <div className="text-center py-8 text-gray-500">
             Your table order is empty. Add items from the menu to get started.
