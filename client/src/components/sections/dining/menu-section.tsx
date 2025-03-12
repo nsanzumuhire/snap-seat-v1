@@ -48,76 +48,70 @@ export default function MenuSection({ items }: MenuSectionProps) {
         ))}
       </div>
 
-      <ScrollArea className="h-[600px] pr-4">
-        <div className="space-y-4">
+      <ScrollArea className="h-[70vh]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredItems.map((item) => (
-            <Card key={item.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <h3 className="text-xl font-semibold">{item.name}</h3>
-                      {item.totalReviews > 0 && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                          {item.totalRating} ({item.totalReviews} reviews)
-                        </div>
+            <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex flex-col h-full">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <h4 className="font-medium">{item.name}</h4>
+                      {item.isPopular && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                          Popular
+                        </span>
+                      )}
+                      {item.isVegetarian && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                          Veg
+                        </span>
                       )}
                     </div>
-                    <p className="text-gray-600 mb-4">{item.description}</p>
+                    <p className="text-sm text-gray-500">{item.description}</p>
+                  </div>
+                </div>
 
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {item.prepTime} mins prep time
-                      </div>
-                      {item.available === 1 ? (
-                        <span className="text-green-600">In Stock</span>
-                      ) : (
-                        <span className="text-red-600">Out of Stock</span>
-                      )}
+                <div className="mt-auto pt-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium">
+                      ${typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price).toFixed(2)}
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold">${Number(item.price).toFixed(2)}</span>
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      {item.prepTime && (
                         <TooltipProvider>
                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon">
-                                <AlertCircle className="h-4 w-4" />
-                              </Button>
+                            <TooltipTrigger>
+                              <div className="flex items-center">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {item.prepTime} min
+                              </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Need help with this item? Call server
+                              <p>Preparation Time</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-
-                        <Button 
-                          className="flex items-center gap-2"
-                          disabled={item.available === 0}
-                          onClick={() => handleAddToTable(item)}
-                        >
-                          <Plus className="h-4 w-4" />
-                          Add to Table
-                        </Button>
-                      </div>
+                      )}
                     </div>
                   </div>
-
-                  {item.imageUrl && (
-                    <div className="w-32 h-32 flex-shrink-0">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
+                  <Button
+                    size="sm"
+                    className="h-8"
+                    onClick={() => handleAddToTable(item)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+
+                {item.allergens && (
+                  <div className="mt-2 flex items-start gap-1 text-xs text-muted-foreground">
+                    <AlertCircle className="h-3 w-3 mt-0.5" />
+                    <span>Contains {item.allergens}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       </ScrollArea>

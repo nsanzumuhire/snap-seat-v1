@@ -24,7 +24,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export default function TableOrder() {
+type TableOrderProps = {
+  embedded?: boolean;
+};
+
+export default function TableOrder({ embedded = false }: TableOrderProps) {
   const { state, dispatch } = useTableOrder();
   const [tableNumber, setTableNumber] = useState("");
   const { toast } = useToast();
@@ -61,10 +65,139 @@ export default function TableOrder() {
     });
   };
 
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1">
-        {/* Table Number Input */}
+  if (embedded) {
+    return (
+      <div className="bg-white">
+        <div className="flex flex-col md:flex-row">
+          <div className="flex-1"> {/* Left Column - Menu (Assuming this exists) */}
+            {/*  Replace this with your actual menu implementation.  This is a placeholder. */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              { /* Menu Items would go here */}
+              <div>Menu Item 1</div>
+              <div>Menu Item 2</div>
+              <div>Menu Item 3</div>
+              <div>Menu Item 4</div>
+            </div>
+          </div>
+          <div className="flex-1 md:ml-4"> {/* Right Column - Table Order */}
+            <div className="mb-6">
+              <Input
+                type="text"
+                placeholder="Enter your table number"
+                value={tableNumber}
+                onChange={(e) => setTableNumber(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <AnimatePresence>
+                {state.items.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                  >
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="font-semibold">{item.name}</h3>
+                            <p className="text-sm text-gray-600">
+                              ${Number(item.price).toFixed(2)} each
+                            </p>
+                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{item.prepTime} mins prep time</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleQuantityChange(item.id, -1)}
+                            >
+                              <MinusCircle className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleQuantityChange(item.id, 1)}
+                            >
+                              <PlusCircle className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+            {state.items.length > 0 ? (
+              <div className="mt-6 space-y-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-lg font-semibold">
+                        <span>Total</span>
+                        <span>${state.total.toFixed(2)}</span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {state.items.reduce((total, item) => total + item.quantity, 0)} items
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="grid gap-4">
+                  <Button
+                    className="w-full"
+                    onClick={handleSubmitOrder}
+                    disabled={!tableNumber}
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    Submit Order
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => dispatch({ type: "CLEAR_ORDER" })}
+                  >
+                    Clear Order
+                  </Button>
+                  <Button
+                    asChild
+                    variant="default"
+                    className="w-full"
+                  >
+                    <Link href="/restaurants/1/payment">
+                      Proceed to Payment
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                Your table order is empty. Add items from the menu to get started.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  } else {
+    return (
+      <div className="flex flex-col h-full">
         <div className="mb-6">
           <Input
             type="text"
@@ -129,56 +262,55 @@ export default function TableOrder() {
             ))}
           </AnimatePresence>
         </div>
-      </div>
-
-      {state.items.length > 0 ? (
-        <div className="mt-6 space-y-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total</span>
-                  <span>${state.total.toFixed(2)}</span>
+        {state.items.length > 0 ? (
+          <div className="mt-6 space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total</span>
+                    <span>${state.total.toFixed(2)}</span>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {state.items.reduce((total, item) => total + item.quantity, 0)} items
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">
-                  {state.items.reduce((total, item) => total + item.quantity, 0)} items
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <div className="grid gap-4">
-            <Button
-              className="w-full"
-              onClick={handleSubmitOrder}
-              disabled={!tableNumber}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Submit Order
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => dispatch({ type: "CLEAR_ORDER" })}
-            >
-              Clear Order
-            </Button>
-            <Button
-              asChild
-              variant="default"
-              className="w-full"
-            >
-              <Link href="/restaurants/1/payment">
-                Proceed to Payment
-              </Link>
-            </Button>
+            <div className="grid gap-4">
+              <Button
+                className="w-full"
+                onClick={handleSubmitOrder}
+                disabled={!tableNumber}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                Submit Order
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => dispatch({ type: "CLEAR_ORDER" })}
+              >
+                Clear Order
+              </Button>
+              <Button
+                asChild
+                variant="default"
+                className="w-full"
+              >
+                <Link href="/restaurants/1/payment">
+                  Proceed to Payment
+                </Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          Your table order is empty. Add items from the menu to get started.
-        </div>
-      )}
-    </div>
-  );
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            Your table order is empty. Add items from the menu to get started.
+          </div>
+        )}
+      </div>
+    );
+  }
 }

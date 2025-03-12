@@ -44,7 +44,7 @@ export default function Dining() {
           </Button>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8">
           {/* Left Column - Restaurant Info */}
           <Card className="lg:col-span-3 p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -85,11 +85,21 @@ export default function Dining() {
               </TabsContent>
             </Tabs>
           </Card>
+          
+          {/* Right Column - Table Order */}
+          <div className="hidden lg:block">
+            <Card className="p-6 sticky top-6">
+              <h3 className="text-xl font-bold mb-4">Your Table Order</h3>
+              <TableOrder embedded={true} />
+            </Card>
+          </div>
         </div>
       </div>
 
-      {/* Floating Table Order Sheet */}
-      <TableOrder />
+      {/* Mobile Floating Table Order Sheet - Only visible on small screens */}
+      <div className="lg:hidden">
+        <TableOrder />
+      </div>
     </motion.div>
   );
 }
