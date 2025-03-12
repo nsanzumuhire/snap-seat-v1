@@ -75,7 +75,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-2">
                       <div className="text-sm font-medium">
-                        ${item.price.toFixed(2)}
+                        ${typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price).toFixed(2)}
                       </div>
                       <div className="flex items-center text-xs text-muted-foreground">
                         {item.prepTime && (
