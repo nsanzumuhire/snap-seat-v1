@@ -30,7 +30,6 @@ type TableOrderProps = {
 
 export default function TableOrder({ embedded = false }: TableOrderProps) {
   const { state, dispatch } = useTableOrder();
-  const [tableNumber, setTableNumber] = useState("");
   const { toast } = useToast();
 
   const handleQuantityChange = (id: number, change: number) => {
@@ -49,16 +48,6 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
   };
 
   const handleSubmitOrder = () => {
-    if (!tableNumber) {
-      toast({
-        title: "Table number required",
-        description: "Please enter your table number to proceed",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    dispatch({ type: "SET_TABLE", payload: tableNumber });
     toast({
       title: "Order submitted",
       description: "Your order has been sent to the kitchen",
@@ -69,26 +58,7 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
     return (
       <div className="bg-white">
         <div className="flex flex-col md:flex-row">
-          <div className="flex-1"> {/* Left Column - Menu (Assuming this exists) */}
-            {/*  Replace this with your actual menu implementation.  This is a placeholder. */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              { /* Menu Items would go here */}
-              <div>Menu Item 1</div>
-              <div>Menu Item 2</div>
-              <div>Menu Item 3</div>
-              <div>Menu Item 4</div>
-            </div>
-          </div>
           <div className="flex-1 md:ml-4"> {/* Right Column - Table Order */}
-            <div className="mb-6">
-              <Input
-                type="text"
-                placeholder="Enter your table number"
-                value={tableNumber}
-                onChange={(e) => setTableNumber(e.target.value)}
-                className="w-full"
-              />
-            </div>
 
             <div className="space-y-4">
               <AnimatePresence>
@@ -163,7 +133,7 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
                   <Button
                     className="w-full"
                     onClick={handleSubmitOrder}
-                    disabled={!tableNumber}
+                    disabled={state.items.length === 0}
                   >
                     <Send className="mr-2 h-4 w-4" />
                     Submit Order
@@ -198,15 +168,6 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
   } else {
     return (
       <div className="flex flex-col h-full">
-        <div className="mb-6">
-          <Input
-            type="text"
-            placeholder="Enter your table number"
-            value={tableNumber}
-            onChange={(e) => setTableNumber(e.target.value)}
-            className="w-full"
-          />
-        </div>
 
         {/* Order Items */}
         <div className="space-y-4">

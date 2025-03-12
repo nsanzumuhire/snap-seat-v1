@@ -8,14 +8,12 @@ interface TableOrderItem extends MenuItem {
 interface TableOrderState {
   items: TableOrderItem[];
   total: number;
-  tableNumber?: string;
 }
 
 type TableOrderAction =
   | { type: "ADD_ITEM"; payload: MenuItem }
   | { type: "REMOVE_ITEM"; payload: number }
   | { type: "UPDATE_QUANTITY"; payload: { id: number; quantity: number } }
-  | { type: "SET_TABLE"; payload: string }
   | { type: "CLEAR_ORDER" };
 
 const TableOrderContext = createContext<{
@@ -54,7 +52,7 @@ function tableOrderReducer(state: TableOrderState, action: TableOrderAction): Ta
     case "UPDATE_QUANTITY": {
       const item = state.items.find(i => i.id === action.payload.id);
       if (!item) return state;
-      
+
       const quantityDiff = action.payload.quantity - item.quantity;
       return {
         ...state,
@@ -66,16 +64,10 @@ function tableOrderReducer(state: TableOrderState, action: TableOrderAction): Ta
         total: state.total + (Number(item.price) * quantityDiff)
       };
     }
-    case "SET_TABLE":
-      return {
-        ...state,
-        tableNumber: action.payload
-      };
     case "CLEAR_ORDER":
       return {
         items: [],
-        total: 0,
-        tableNumber: undefined
+        total: 0
       };
     default:
       return state;

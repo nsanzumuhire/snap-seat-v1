@@ -85,7 +85,7 @@ export default function Dining() {
               </TabsContent>
             </Tabs>
           </Card>
-          
+
           {/* Right Column - Table Order */}
           <div className="hidden lg:block">
             <Card className="p-6 sticky top-6">
