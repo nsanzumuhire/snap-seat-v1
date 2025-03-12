@@ -25,7 +25,7 @@ import {
   Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Separator from "@/components/ui/separator";
+import { Separator } from "@/components/ui/separator";
 
 type TableOrderProps = {
   embedded?: boolean;
