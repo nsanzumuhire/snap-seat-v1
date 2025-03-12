@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import MenuSection from "@/components/sections/dining/menu-section";
-import BookingSection from "@/components/sections/dining/booking-section";
 import ReviewsSection from "@/components/sections/dining/reviews-section";
 import TableOrder from "@/components/sections/dining/table-order";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function Dining() {
   const [activeTab, setActiveTab] = useState("menu");
@@ -28,17 +29,24 @@ export default function Dining() {
       className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50"
     >
       <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Restaurant Info */}
-          <Card className="lg:col-span-2 p-6">
-            <h1 className="text-3xl font-bold mb-4">SnapSeat Restaurant</h1>
-            <div className="flex items-center gap-4 mb-6">
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">SnapSeat Restaurant</h1>
+            <div className="flex items-center gap-4 mt-2">
               <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
                 Open Now
               </span>
               <span className="text-sm text-gray-600">$$$ • Modern American</span>
             </div>
+          </div>
+          <Button asChild variant="default" size="lg">
+            <Link href="/restaurants/1/book">Book a Table</Link>
+          </Button>
+        </div>
 
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Column - Restaurant Info */}
+          <Card className="lg:col-span-3 p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid grid-cols-3 mb-8">
                 <TabsTrigger value="menu">Menu</TabsTrigger>
@@ -77,11 +85,6 @@ export default function Dining() {
               </TabsContent>
             </Tabs>
           </Card>
-
-          {/* Right Column - Booking Widget */}
-          <div className="lg:col-span-1">
-            <BookingSection />
-          </div>
         </div>
       </div>
 

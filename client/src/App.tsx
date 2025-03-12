@@ -7,7 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Restaurants from "@/pages/restaurants";
 import Menu from "@/pages/menu";
-import Order from "@/pages/order";
+import Book from "@/pages/book";
 import Reviews from "@/pages/reviews";
 import Dining from "@/pages/dining";
 import Payment from "@/pages/payment";
@@ -20,7 +20,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/restaurants" component={Restaurants} />
       <Route path="/restaurants/:id/menu" component={Dining} />
-      <Route path="/restaurants/:id/book" component={Order} />
+      <Route path="/restaurants/:id/book" component={Book} />
       <Route path="/restaurants/:id/payment" component={Payment} />
       <Route path="/menu" component={Menu} />
       <Route path="/reviews" component={Reviews} />
