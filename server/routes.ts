@@ -84,6 +84,78 @@ const sampleMenuItems = [
     imageUrl: "https://images.unsplash.com/photo-1467003909585-2f8a72700288",
     available: 1,
     prepTime: 20
+  },
+  {
+    name: "Spaghetti Carbonara",
+    description: "Spaghetti with pancetta, eggs, pecorino romano cheese, and black pepper",
+    price: "18.99",
+    category: "Main Course",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 20
+  },
+  {
+    name: "Chicken Alfredo",
+    description: "Fettuccine pasta in a creamy alfredo sauce with grilled chicken",
+    price: "21.99",
+    category: "Main Course",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 25
+  },
+  {
+    name: "Margherita Pizza",
+    description: "Classic Neapolitan pizza with tomato sauce, mozzarella, and basil",
+    price: "15.99",
+    category: "Pizza",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 15
+  },
+  {
+    name: "Pepperoni Pizza",
+    description: "Pizza with tomato sauce, mozzarella, and pepperoni",
+    price: "17.99",
+    category: "Pizza",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 15
+  },
+  {
+    name: "Tiramisu",
+    description: "Classic Italian dessert made with layers of coffee-soaked ladyfingers and mascarpone cream",
+    price: "7.99",
+    category: "Desserts",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 0
+  },
+  {
+    name: "Chocolate Lava Cake",
+    description: "Warm chocolate cake with a molten chocolate center",
+    price: "9.99",
+    category: "Desserts",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 15
+  },
+  {
+    name: "Coca-Cola",
+    description: "Classic Coca-Cola",
+    price: "3.99",
+    category: "Drinks",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 0
+  },
+  {
+    name: "Iced Tea",
+    description: "Refreshing iced tea",
+    price: "2.99",
+    category: "Drinks",
+    imageUrl: "https://via.placeholder.com/150", // Placeholder image URL
+    available: 1,
+    prepTime: 0
   }
 ];
 

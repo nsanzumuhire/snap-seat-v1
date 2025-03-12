@@ -53,6 +53,15 @@ export default function MenuSection({ items }: MenuSectionProps) {
           {filteredItems.map((item) => (
             <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex flex-col h-full">
+                {item.imageUrl && (
+                  <div className="w-full h-32 mb-3 overflow-hidden rounded-md">
+                    <img 
+                      src={item.imageUrl} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center flex-wrap gap-2">
