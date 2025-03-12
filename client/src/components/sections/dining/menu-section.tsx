@@ -17,110 +17,118 @@ interface MenuSectionProps {
   items: MenuItem[];
 }
 
-const categories = ["Starters", "Main Course", "Desserts", "Drinks"];
-
 export default function MenuSection({ items }: MenuSectionProps) {
-  const [selectedCategory, setSelectedCategory] = useState("Starters");
-  const { dispatch } = useTableOrder();
+  const { addToOrder } = useTableOrder();
   const { toast } = useToast();
 
-  const filteredItems = items.filter(item => item.category === selectedCategory);
-
-  const handleAddToTable = (item: MenuItem) => {
-    dispatch({ type: "ADD_ITEM", payload: item });
+  const handleAddToOrder = (item: MenuItem) => {
+    addToOrder(item);
     toast({
-      title: "Added to Table",
-      description: `${item.name} has been added to your table order.`
+      title: "Added to order",
+      description: `${item.name} has been added to your order.`,
     });
   };
 
   return (
-    <div>
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {categories.map(category => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? "default" : "outline"}
-            onClick={() => setSelectedCategory(category)}
-          >
-            {category}
-          </Button>
-        ))}
-      </div>
-
-      <ScrollArea className="h-[600px] pr-4">
-        <div className="space-y-4">
-          {filteredItems.map((item) => (
-            <Card key={item.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <h3 className="text-xl font-semibold">{item.name}</h3>
-                      {item.totalReviews > 0 && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                          {item.totalRating} ({item.totalReviews} reviews)
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-gray-600 mb-4">{item.description}</p>
-
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {item.prepTime} mins prep time
-                      </div>
-                      {item.available === 1 ? (
-                        <span className="text-green-600">In Stock</span>
-                      ) : (
-                        <span className="text-red-600">Out of Stock</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold">${Number(item.price).toFixed(2)}</span>
-                      <div className="flex items-center gap-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon">
-                                <AlertCircle className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Need help with this item? Call server
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <Button 
-                          className="flex items-center gap-2"
-                          disabled={item.available === 0}
-                          onClick={() => handleAddToTable(item)}
-                        >
-                          <Plus className="h-4 w-4" />
-                          Add to Table
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {item.imageUrl && (
-                    <div className="w-32 h-32 flex-shrink-0">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
+    <ScrollArea className="h-[65vh] px-1 py-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
+        {items.map((item) => (
+          <Card key={item.id} className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex flex-col">
+                <div className="relative h-32 w-full">
+                  <img
+                    src={item.image || "https://placehold.co/100x100/png"}
+                    alt={item.name}
+                    className="h-full w-full object-cover"
+                  />
+                  {item.popular && (
+                    <div className="absolute left-0 top-0 bg-yellow-500 px-1 py-0.5 text-[10px] font-medium text-white">
+                      Popular
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </ScrollArea>
-    </div>
+                <div className="flex flex-col p-3">
+                  <div className="mb-2 flex items-start justify-between">
+                    <h3 className="font-medium text-sm">{item.name}</h3>
+                    <div className="ml-2 flex items-center space-x-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center text-yellow-500">
+                              <Star className="mr-0.5 h-3.5 w-3.5 fill-current" />
+                              <span className="text-xs font-medium">
+                                {item.rating}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs">Rating: {item.rating}/5</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                  <p className="line-clamp-2 text-xs text-muted-foreground min-h-[2rem]">
+                    {item.description}
+                  </p>
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-medium">
+                        ${item.price.toFixed(2)}
+                      </div>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        {item.prepTime && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center">
+                                  <Clock className="mr-1 h-3 w-3" />
+                                  <span>{item.prepTime} min</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p className="text-xs">
+                                  Preparation time: {item.prepTime} minutes
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      {item.allergens && item.allergens.length > 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex cursor-help items-center text-yellow-500">
+                                <AlertCircle className="h-3 w-3" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p className="text-xs">
+                                Contains: {item.allergens.join(", ")}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 gap-1 rounded-full"
+                      onClick={() => handleAddToOrder(item)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span className="text-xs">Add</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </ScrollArea>
   );
 }
