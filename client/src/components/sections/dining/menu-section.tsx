@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MenuItem } from "@shared/schema";
+import { useTableOrder } from "@/lib/tableOrderContext";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 interface MenuSectionProps {
   items: MenuItem[];
@@ -19,8 +21,18 @@ const categories = ["Starters", "Main Course", "Desserts", "Drinks"];
 
 export default function MenuSection({ items }: MenuSectionProps) {
   const [selectedCategory, setSelectedCategory] = useState("Starters");
+  const { dispatch } = useTableOrder();
+  const { toast } = useToast();
 
   const filteredItems = items.filter(item => item.category === selectedCategory);
+
+  const handleAddToTable = (item: MenuItem) => {
+    dispatch({ type: "ADD_ITEM", payload: item });
+    toast({
+      title: "Added to Table",
+      description: `${item.name} has been added to your table order.`
+    });
+  };
 
   return (
     <div>
@@ -85,9 +97,10 @@ export default function MenuSection({ items }: MenuSectionProps) {
                         <Button 
                           className="flex items-center gap-2"
                           disabled={item.available === 0}
+                          onClick={() => handleAddToTable(item)}
                         >
                           <Plus className="h-4 w-4" />
-                          Add to Order
+                          Add to Table
                         </Button>
                       </div>
                     </div>

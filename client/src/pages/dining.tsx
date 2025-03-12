@@ -6,17 +6,18 @@ import { Card } from "@/components/ui/card";
 import MenuSection from "@/components/sections/dining/menu-section";
 import BookingSection from "@/components/sections/dining/booking-section";
 import ReviewsSection from "@/components/sections/dining/reviews-section";
+import TableOrder from "@/components/sections/dining/table-order";
 import { Separator } from "@/components/ui/separator";
 
 export default function Dining() {
   const [activeTab, setActiveTab] = useState("menu");
 
-  const { data: menuItems = [] } = useQuery({
-    queryKey: ["/api/menu"],
+  const { data: menuItems = [], isLoading: menuLoading } = useQuery({
+    queryKey: ["/api/restaurants/1/menu"],
   });
 
-  const { data: reviews = [] } = useQuery({
-    queryKey: ["/api/reviews"],
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery({
+    queryKey: ["/api/restaurants/1/reviews"],
   });
 
   return (
@@ -37,7 +38,7 @@ export default function Dining() {
               </span>
               <span className="text-sm text-gray-600">$$$ • Modern American</span>
             </div>
-            
+
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid grid-cols-3 mb-8">
                 <TabsTrigger value="menu">Menu</TabsTrigger>
@@ -60,9 +61,9 @@ export default function Dining() {
                     Experience modern dining with our innovative menu and elegant atmosphere.
                     Perfect for special occasions or casual dining.
                   </p>
-                  
+
                   <Separator />
-                  
+
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Additional Information</h3>
                     <ul className="space-y-2 text-gray-600">
@@ -83,6 +84,9 @@ export default function Dining() {
           </div>
         </div>
       </div>
+
+      {/* Floating Table Order Sheet */}
+      <TableOrder />
     </motion.div>
   );
 }

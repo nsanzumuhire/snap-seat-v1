@@ -4,6 +4,7 @@ import { useTableOrder } from "@/lib/tableOrderContext";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Link } from "wouter";
 import {
   Sheet,
   SheetContent,
@@ -19,7 +20,6 @@ import {
   Split,
   Table as TableIcon,
 } from "lucide-react";
-import Link from 'next/link';
 
 export default function TableOrder() {
   const { state, dispatch } = useTableOrder();
@@ -29,7 +29,7 @@ export default function TableOrder() {
   const handleQuantityChange = (id: number, change: number) => {
     const item = state.items.find(i => i.id === id);
     if (!item) return;
-    
+
     const newQuantity = item.quantity + change;
     if (newQuantity < 1) {
       dispatch({ type: "REMOVE_ITEM", payload: id });
