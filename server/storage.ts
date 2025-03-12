@@ -5,6 +5,9 @@ import {
   TableBooking, InsertBooking,
   Review, InsertReview
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { restaurants, menuItems, waitlistSignups, tableBookings, reviews } from "@shared/schema";
 
 export interface IStorage {
   // Restaurant methods
@@ -33,158 +36,109 @@ export interface IStorage {
   getBookingReviews(bookingId: number): Promise<Review[]>;
 }
 
-export class MemStorage implements IStorage {
-  private restaurants: Map<number, Restaurant>;
-  private waitlist: Map<number, WaitlistSignup>;
-  private menu: Map<number, MenuItem>;
-  private bookings: Map<number, TableBooking>;
-  private reviews: Map<number, Review>;
-  private currentIds: {
-    restaurants: number;
-    waitlist: number;
-    menu: number;
-    bookings: number;
-    reviews: number;
-  };
-
-  constructor() {
-    this.restaurants = new Map();
-    this.waitlist = new Map();
-    this.menu = new Map();
-    this.bookings = new Map();
-    this.reviews = new Map();
-    this.currentIds = {
-      restaurants: 1,
-      waitlist: 1,
-      menu: 1,
-      bookings: 1,
-      reviews: 1
-    };
-  }
-
+export class DatabaseStorage implements IStorage {
   // Restaurant methods
   async createRestaurant(restaurant: InsertRestaurant): Promise<Restaurant> {
-    const id = this.currentIds.restaurants++;
-    const newRestaurant: Restaurant = { 
-      ...restaurant, 
-      id,
-      rating: "0",
-      totalReviews: 0
-    };
-    this.restaurants.set(id, newRestaurant);
+    const [newRestaurant] = await db.insert(restaurants).values(restaurant).returning();
     return newRestaurant;
   }
 
   async getRestaurants(): Promise<Restaurant[]> {
-    return Array.from(this.restaurants.values());
+    return await db.select().from(restaurants);
   }
 
   async getRestaurantById(id: number): Promise<Restaurant | undefined> {
-    return this.restaurants.get(id);
+    const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.id, id));
+    return restaurant;
   }
 
   // Waitlist methods
   async createWaitlistSignup(signup: InsertWaitlist): Promise<WaitlistSignup> {
-    const id = this.currentIds.waitlist++;
-    const newSignup: WaitlistSignup = { ...signup, id };
-    this.waitlist.set(id, newSignup);
+    const [newSignup] = await db.insert(waitlistSignups).values(signup).returning();
     return newSignup;
   }
 
   async getWaitlistSignups(): Promise<WaitlistSignup[]> {
-    return Array.from(this.waitlist.values());
+    return await db.select().from(waitlistSignups);
   }
 
   // Menu methods
   async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
-    const id = this.currentIds.menu++;
-    const newItem: MenuItem = { 
-      ...item, 
-      id,
-      totalRating: "0",
-      totalReviews: 0
-    };
-    this.menu.set(id, newItem);
+    const [newItem] = await db.insert(menuItems).values(item).returning();
     return newItem;
   }
 
   async getMenuItems(restaurantId: number): Promise<MenuItem[]> {
-    return Array.from(this.menu.values())
-      .filter(item => item.restaurantId === restaurantId);
+    return await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
   }
 
   async getMenuItemById(id: number): Promise<MenuItem | undefined> {
-    return this.menu.get(id);
+    const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
+    return item;
   }
 
   // Booking methods
   async createBooking(booking: InsertBooking): Promise<TableBooking> {
-    const id = this.currentIds.bookings++;
-    const newBooking: TableBooking = { ...booking, id, status: "pending" };
-    this.bookings.set(id, newBooking);
+    const [newBooking] = await db.insert(tableBookings).values(booking).returning();
     return newBooking;
   }
 
   async getBookings(restaurantId: number): Promise<TableBooking[]> {
-    return Array.from(this.bookings.values())
-      .filter(booking => booking.restaurantId === restaurantId);
+    return await db.select().from(tableBookings).where(eq(tableBookings.restaurantId, restaurantId));
   }
 
   async getBookingById(id: number): Promise<TableBooking | undefined> {
-    return this.bookings.get(id);
+    const [booking] = await db.select().from(tableBookings).where(eq(tableBookings.id, id));
+    return booking;
   }
 
   // Review methods
   async createReview(review: InsertReview): Promise<Review> {
-    const id = this.currentIds.reviews++;
-    const newReview: Review = { ...review, id, date: new Date() };
-    this.reviews.set(id, newReview);
+    const [newReview] = await db.insert(reviews).values(review).returning();
 
-    // Update restaurant rating if it's a restaurant review
+    // Update restaurant or menu item ratings
     if (review.restaurantId && !review.menuItemId) {
-      const restaurant = await this.getRestaurantById(review.restaurantId);
-      if (restaurant) {
-        const restaurantReviews = await this.getReviews(review.restaurantId);
-        const avgRating = restaurantReviews.reduce((sum, r) => sum + r.rating, 0) / restaurantReviews.length;
-        this.restaurants.set(review.restaurantId, {
-          ...restaurant,
-          rating: avgRating.toFixed(1),
-          totalReviews: restaurantReviews.length
-        });
-      }
+      const restaurantReviews = await this.getReviews(review.restaurantId);
+      const avgRating = restaurantReviews.reduce((sum, r) => sum + r.rating, 0) / restaurantReviews.length;
+
+      await db.update(restaurants)
+        .set({ 
+          rating: avgRating.toFixed(1), 
+          totalReviews: restaurantReviews.length 
+        })
+        .where(eq(restaurants.id, review.restaurantId));
     }
 
-    // Update menu item rating if it's a menu item review
     if (review.menuItemId) {
-      const menuItem = await this.getMenuItemById(review.menuItemId);
-      if (menuItem) {
-        const menuItemReviews = await this.getMenuItemReviews(review.menuItemId);
-        const avgRating = menuItemReviews.reduce((sum, r) => sum + r.rating, 0) / menuItemReviews.length;
-        this.menu.set(review.menuItemId, {
-          ...menuItem,
-          totalRating: avgRating.toFixed(1),
-          totalReviews: menuItemReviews.length
-        });
-      }
+      const menuItemReviews = await this.getMenuItemReviews(review.menuItemId);
+      const avgRating = menuItemReviews.reduce((sum, r) => sum + r.rating, 0) / menuItemReviews.length;
+
+      await db.update(menuItems)
+        .set({ 
+          totalRating: avgRating.toFixed(1), 
+          totalReviews: menuItemReviews.length 
+        })
+        .where(eq(menuItems.id, review.menuItemId));
     }
 
     return newReview;
   }
 
   async getReviews(restaurantId: number): Promise<Review[]> {
-    return Array.from(this.reviews.values())
-      .filter(review => review.restaurantId === restaurantId && !review.menuItemId);
+    return await db.select().from(reviews)
+      .where(eq(reviews.restaurantId, restaurantId))
+      .where(eq(reviews.menuItemId, null));
   }
 
   async getMenuItemReviews(menuItemId: number): Promise<Review[]> {
-    return Array.from(this.reviews.values())
-      .filter(review => review.menuItemId === menuItemId);
+    return await db.select().from(reviews)
+      .where(eq(reviews.menuItemId, menuItemId));
   }
 
   async getBookingReviews(bookingId: number): Promise<Review[]> {
-    return Array.from(this.reviews.values())
-      .filter(review => review.bookingId === bookingId);
+    return await db.select().from(reviews)
+      .where(eq(reviews.bookingId, bookingId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
