@@ -3,7 +3,6 @@ import { useParams, Link } from "wouter";
 import { MenuItem, Review } from "@shared/schema";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MenuSection from "@/components/sections/dining/menu-section";
 import ReviewsSection from "@/components/sections/dining/reviews-section";
 import TableOrder from "@/components/sections/dining/table-order";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
+import MenuSection from "@/components/sections/dining/menu-section";
 
 // Restaurant structure for reference
 // id, name, description, cuisine, priceRange, address, phone, email, openingHours, rating, totalReviews, imageUrl

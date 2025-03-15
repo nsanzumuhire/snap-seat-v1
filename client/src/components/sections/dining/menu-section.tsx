@@ -18,7 +18,8 @@ import {
   SlidersHorizontal,
   Sparkles,
   Utensils,
-  ImageIcon
+  ImageIcon,
+  Settings2
 } from "lucide-react";
 import {
   Tooltip,
@@ -40,10 +41,22 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInView } from "react-intersection-observer";
+import { CustomizationModal } from "@/components/ui/customization-modal";
 
 interface MenuSectionProps {
   items: MenuItem[];
   restaurantName?: string;
+}
+
+interface MenuItemCustomizations {
+  removedIngredients?: string[];
+  specialInstructions?: string;
+  quantity?: number;
+  cookingPreference?: string;
+}
+
+interface MenuItemWithCustomizations extends MenuItem {
+  customizations?: MenuItemCustomizations;
 }
 
 const categories = ["All", "Starters", "Main Course", "Desserts", "Drinks"];
@@ -111,250 +124,266 @@ const MenuItemCard = memo(({
   reviewStars: (rating: number, totalReviews: number) => React.ReactNode;
   isGrid: boolean;
 }) => {
+  const [openModal, setOpenModal] = useState(false);
   const [setDialogRef, dialogInView] = useInView({
     triggerOnce: true,
-    rootMargin: '0px',
   });
 
-  const [itemRef, itemInView] = useInView({
-    triggerOnce: true,
-    rootMargin: '100px',
-  });
+  const handleCustomization = (item: MenuItem, customizations: MenuItemCustomizations) => {
+    handleAddToTable({ ...item, customizations } as MenuItemWithCustomizations);
+  };
 
-  // Only render full content when in view
-  if (!itemInView) {
-    return (
-      <div ref={itemRef} className={isGrid ? "h-72" : "h-36"}>
-        <Card className="w-full h-full animate-pulse">
-          <div className="flex h-full">
-            {isGrid ? (
-              <Skeleton className="w-full h-40" />
-            ) : (
-              <Skeleton className="w-36 h-full" />
-            )}
-            <div className="p-3 flex-1 flex flex-col">
-              <Skeleton className="w-3/4 h-4 mb-2" />
-              <Skeleton className="w-full h-3 mb-1" />
-              <Skeleton className="w-full h-3 mb-1" />
-              <Skeleton className="w-1/2 h-3" />
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Grid view item
-  if (isGrid) {
-    return (
-      <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
-        <Dialog>
-          <DialogTrigger asChild>
-            <button className="w-full text-left">
-              {item.imageUrl && (
-                <LazyImage
-                  src={item.imageUrl}
-                  alt={item.name}
-                  className="w-full h-40"
-                />
-              )}
-            </button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{item.name}</DialogTitle>
-            </DialogHeader>
-            <div ref={setDialogRef} className="grid gap-4 py-4">
-              {dialogInView && (
-                <>
-                  {item.imageUrl && (
-                    <LazyImage
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-full h-56 rounded-md"
-                    />
-                  )}
-                  {item.tags && (
-                    <div className="flex flex-wrap gap-1">
-                      {item.tags.split(',').map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className={cn(
-                            "px-2 py-0.5 rounded-sm",
-                            tag === 'special' && "bg-amber-100 text-amber-800 border-amber-200",
-                            tag === 'vegetarian' && "bg-green-100 text-green-800 border-green-200",
-                            tag === 'vegan' && "bg-emerald-100 text-emerald-800 border-emerald-200",
-                            tag === 'popular' && "bg-blue-100 text-blue-800 border-blue-200",
-                            tag === 'healthy' && "bg-cyan-100 text-cyan-800 border-cyan-200"
-                          )}
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-gray-700">{item.description}</p>
-                  <div className="flex justify-between items-center">
-                    <div className="text-lg font-semibold">${parseFloat(item.price.toString()).toFixed(2)}</div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-500">Prep: {item.prepTime} min</span>
-                    </div>
-                  </div>
-                  {item.totalReviews && item.totalReviews > 0 && (
-                    <div className="mt-4 border-t pt-4">
-                      <h4 className="font-medium mb-2 flex items-center gap-1">
-                        <StarHalf className="h-4 w-4" /> Reviews
-                      </h4>
+  return (
+    <>
+      {isGrid ? (
+        <Card className="overflow-hidden">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="w-full text-left">
+                {item.imageUrl && (
+                  <LazyImage
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-full h-40 object-cover"
+                  />
+                )}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{item.name}</DialogTitle>
+              </DialogHeader>
+              <div ref={setDialogRef} className="grid gap-4 py-4">
+                {dialogInView && (
+                  <>
+                    {item.imageUrl && (
+                      <LazyImage
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-56 rounded-md object-cover"
+                      />
+                    )}
+                    {item.tags && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.tags.split(',').map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className={cn(
+                              "px-2 py-0.5 rounded-sm",
+                              tag === 'special' && "bg-amber-100 text-amber-800 border-amber-200",
+                              tag === 'vegetarian' && "bg-green-100 text-green-800 border-green-200",
+                              tag === 'vegan' && "bg-emerald-100 text-emerald-800 border-emerald-200",
+                              tag === 'popular' && "bg-blue-100 text-blue-800 border-blue-200",
+                              tag === 'healthy' && "bg-cyan-100 text-cyan-800 border-cyan-200"
+                            )}
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-gray-700">{item.description}</p>
+                    <div className="flex justify-between items-center">
+                      <div className="text-lg font-semibold">${Number(item.price).toFixed(2)}</div>
                       <div className="flex items-center gap-2">
-                        <div className="flex">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${i < parseInt((item.totalRating || '0').toString())
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "text-gray-300"
-                                }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm">
-                          {parseFloat((item.totalRating || '0').toString()).toFixed(1)} ({item.totalReviews} reviews)
-                        </span>
-                      </div>
-                      <div className="mt-2 space-y-2">
-                        <div className="text-sm bg-gray-50 p-2 rounded-md">
-                          <div className="font-medium">John D.</div>
-                          <p>Really enjoyed this dish! Would order again.</p>
-                        </div>
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-500">Prep: {item.prepTime} min</span>
                       </div>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-            <Button onClick={() => handleAddToTable(item)}>
-              <Plus className="h-4 w-4 mr-1" /> Add to Order
-            </Button>
-          </DialogContent>
-        </Dialog>
+                    {item.totalReviews && item.totalReviews > 0 && (
+                      <div className="mt-4 border-t pt-4">
+                        <h4 className="font-medium mb-2 flex items-center gap-1">
+                          <StarHalf className="h-4 w-4" /> Reviews
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <div className="flex">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${i < parseInt((item.totalRating || '0').toString())
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-gray-300"
+                                  }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-sm">
+                            {parseFloat((item.totalRating || '0').toString()).toFixed(1)} ({item.totalReviews} reviews)
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
 
-        <CardContent className="p-3">
-          <div className="flex flex-col h-full">
-            <div className="space-y-1 mb-2">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm truncate">{item.name}</h4>
-                {reviewStars(parseFloat((item.totalRating || '0').toString()), item.totalReviews || 0)}
+          <CardContent className="p-4 h-full flex flex-col">
+            <div className="flex-1 flex flex-col justify-between space-y-2">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-sm truncate flex-1 pr-2">{item.name}</h4>
+                  {item.totalReviews && item.totalReviews > 0 && (
+                    <div className="flex items-center gap-1 text-xs whitespace-nowrap">
+                      <Star className="h-3 w-3 flex-shrink-0 fill-yellow-400 text-yellow-400" />
+                      <span>{parseFloat((item.totalRating || '0').toString()).toFixed(1)}</span>
+                      <span className="text-gray-400">({item.totalReviews})</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 line-clamp-2 min-h-[2.5rem]">{item.description}</p>
               </div>
-              <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <Clock className="h-3 w-3" />
-                <span>Prep: {item.prepTime} min</span>
-              </div>
-              {item.tags && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {item.tags.split(',').map((tag) => (
+
+              <div className="space-y-2 min-h-[4rem]">
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Clock className="h-3 w-3 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Prep: {item.prepTime} min</span>
+                </div>
+                <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
+                  {item.tags && item.tags.split(',').map((tag: string) => (
                     <Badge
                       key={tag}
                       variant="outline"
                       className={cn(
-                        "text-[10px] px-1 py-0 rounded-sm",
-                        tag === 'special' && "bg-amber-100 text-amber-800 border-amber-200",
-                        tag === 'vegetarian' && "bg-green-100 text-green-800 border-green-200",
-                        tag === 'vegan' && "bg-emerald-100 text-emerald-800 border-emerald-200",
-                        tag === 'popular' && "bg-blue-100 text-blue-800 border-blue-200",
-                        tag === 'healthy' && "bg-cyan-100 text-cyan-800 border-cyan-200"
+                        "text-[10px] px-1.5 py-0 rounded-sm",
+                        tag.trim() === 'special' && "bg-amber-100 text-amber-800 border-amber-200",
+                        tag.trim() === 'vegetarian' && "bg-green-100 text-green-800 border-green-200",
+                        tag.trim() === 'vegan' && "bg-emerald-100 text-emerald-800 border-emerald-200",
+                        tag.trim() === 'popular' && "bg-blue-100 text-blue-800 border-blue-200",
+                        tag.trim() === 'healthy' && "bg-cyan-100 text-cyan-800 border-cyan-200"
                       )}
                     >
-                      {tag}
+                      {tag.trim()}
                     </Badge>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
 
-            <div className="mt-auto pt-2 flex items-center justify-between">
-              <div className="text-sm font-medium">
-                ${parseFloat(item.price.toString()).toFixed(2)}
+            <div className="flex items-center justify-between mt-4 pt-2 border-t">
+              <p className="font-medium">${Number(item.price).toFixed(2)}</p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenModal(true);
+                  }}
+                >
+                  Customize
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToTable(item);
+                  }}
+                >
+                  Add
+                </Button>
               </div>
-              <Button
-                size="sm"
-                className="h-7 px-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddToTable(item);
-                }}
-              >
-                <Plus className="h-3 w-3 mr-1" /> Add
-              </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex items-start space-x-4 py-4">
+          {item.imageUrl && (
+            <LazyImage
+              src={item.imageUrl}
+              alt={item.name}
+              className="w-36 h-36 flex-shrink-0 rounded-md object-cover"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-base truncate">{item.name}</h4>
+                  {item.totalReviews && item.totalReviews > 0 && (
+                    <div className="flex items-center gap-1 text-sm whitespace-nowrap">
+                      <Star className="h-4 w-4 flex-shrink-0 fill-yellow-400 text-yellow-400" />
+                      <span>{parseFloat((item.totalRating || '0').toString()).toFixed(1)}</span>
+                      <span className="text-gray-500">({item.totalReviews})</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 line-clamp-2 after:content-['...']">{item.description}</p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenModal(true);
+                    }}
+                  >
+                    Customize
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToTable(item);
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Add
+                  </Button>
+                </div>
+                <div className="text-sm font-medium">
+                  ${Number(item.price).toFixed(2)}
+                </div>
+              </div>
+            </div>
 
-  // List view item
-  return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <div className="flex">
-        {item.imageUrl && (
-          <LazyImage
-            src={item.imageUrl}
-            alt={item.name}
-            className="w-36 h-36 flex-shrink-0"
-          />
-        )}
-        <CardContent className="p-4 flex-1">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between w-full">
-                <h4 className="font-medium text-base">{item.name}</h4>
-                {reviewStars(parseFloat((item.totalRating || '0').toString()), item.totalReviews || 0)}
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 text-sm text-gray-500">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Prep: {item.prepTime} min</span>
+                </div>
               </div>
-              <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Clock className="h-3 w-3" />
-                <span>Prep: {item.prepTime} min</span>
-              </div>
+
               {item.tags && (
                 <div className="flex flex-wrap gap-1">
-                  {item.tags.split(',').map((tag) => (
+                  {item.tags.split(',').map((tag: string) => (
                     <Badge
                       key={tag}
                       variant="outline"
                       className={cn(
                         "text-xs px-1.5 py-0 rounded-sm",
-                        tag === 'special' && "bg-amber-100 text-amber-800 border-amber-200",
-                        tag === 'vegetarian' && "bg-green-100 text-green-800 border-green-200",
-                        tag === 'vegan' && "bg-emerald-100 text-emerald-800 border-emerald-200",
-                        tag === 'popular' && "bg-blue-100 text-blue-800 border-blue-200",
-                        tag === 'healthy' && "bg-cyan-100 text-cyan-800 border-cyan-200"
+                        tag.trim() === 'special' && "bg-amber-100 text-amber-800 border-amber-200",
+                        tag.trim() === 'vegetarian' && "bg-green-100 text-green-800 border-green-200",
+                        tag.trim() === 'vegan' && "bg-emerald-100 text-emerald-800 border-emerald-200",
+                        tag.trim() === 'popular' && "bg-blue-100 text-blue-800 border-blue-200",
+                        tag.trim() === 'healthy' && "bg-cyan-100 text-cyan-800 border-cyan-200"
                       )}
                     >
-                      {tag}
+                      {tag.trim()}
                     </Badge>
                   ))}
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-end gap-3">
-              <div className="text-sm font-medium">
-                ${parseFloat(item.price.toString()).toFixed(2)}
-              </div>
-              <Button
-                size="sm"
-                className="h-8 px-3"
-                onClick={() => handleAddToTable(item)}
-              >
-                <Plus className="h-3 w-3 mr-1" /> Add
-              </Button>
-            </div>
           </div>
-        </CardContent>
-      </div>
-    </Card>
+        </div>
+      )}
+
+      <CustomizationModal
+        item={item}
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        onAddToOrder={handleCustomization}
+      />
+    </>
   );
 });
 
@@ -366,6 +395,7 @@ export default function MenuSection({ items, restaurantName }: MenuSectionProps)
   const { toast } = useToast();
   const [visibleItems, setVisibleItems] = useState < MenuItem[] > ([]);
   const scrollAreaRef = useRef < HTMLDivElement > (null);
+  const [openModal, setOpenModal] = useState(false);
 
   // Calculate filtered items
   const filteredItems = selectedCategory === "All"
@@ -401,7 +431,7 @@ export default function MenuSection({ items, restaurantName }: MenuSectionProps)
     return () => clearTimeout(timer);
   }, [displayedItems]);
 
-  const handleAddToTable = (item: MenuItem) => {
+  const handleAddToTable = (item: MenuItem | MenuItemWithCustomizations) => {
     dispatch({ type: "ADD_ITEM", payload: item });
     toast({
       title: "Added to Table",
@@ -509,7 +539,7 @@ export default function MenuSection({ items, restaurantName }: MenuSectionProps)
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+      <div className="flex gap-2 overflow-x-auto scrollbar-none">
         {categories.map(category => (
           <Button
             key={category}
@@ -528,7 +558,10 @@ export default function MenuSection({ items, restaurantName }: MenuSectionProps)
   return (
     <div>
       {menuHeader}
-      <ScrollArea ref={scrollAreaRef} className="h-[calc(100vh-220px)]">
+      <ScrollArea
+        ref={scrollAreaRef}
+        className="h-[calc(100vh-220px)] overflow-hidden scrollbar-none [&_[data-radix-scroll-area-viewport]]:!block"
+      >
         <div className={viewMode === "grid"
           ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
           : "space-y-3"

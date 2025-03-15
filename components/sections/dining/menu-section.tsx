@@ -1,3 +1,6 @@
+import { CustomizationModal } from "@/components/ui/customization-modal";
+import { useState } from "react";
+
 // Apply specials filter
 const displayedItems = showSpecials
     ? filteredItems.filter(item => {
@@ -51,12 +54,34 @@ const displayedItems = showSpecials
 <div className="flex items-center justify-between">
   <h4 className="font-medium text-sm truncate">{item.name}</h4>
   {reviewStars(parseFloat((item.totalRating || '0').toString()), item.totalReviews || 0)}
+  <Button
+    size="sm"
+    className="h-7 px-2"
+    onClick={(e) => {
+      e.stopPropagation();
+      console.log("Opening modal for", item.name);
+      setOpenModal(true);
+    }}
+  >
+    <Plus className="h-3 w-3 mr-1" /> Add
+  </Button>
 </div>
 
 // Menu item card list view
-<div className="flex items-center justify-between w-full">
+<div clasAddme="flex items-center justify-between w-full">Add
   <h4 className="font-medium text-base">{item.name}</h4>
   {reviewStars(parseFloat((item.totalRating || '0').toString()), item.totalReviews || 0)}
+  <Button
+    size="sm"
+    className="h-8 px-3"
+    onClick={(e) => {
+      e.stopPropagation();
+      console.log("Opening modal for", item.name);
+      setOpenModal(true);
+    }}
+  >
+    <Plus className="h-3 w-3 mr-1" /> Add
+  </Button>
 </div>
 
 const reviewStars = (rating: number | null | undefined, totalReviews: number | null | undefined) => {
@@ -69,4 +94,40 @@ const reviewStars = (rating: number | null | undefined, totalReviews: number | n
             <span className="text-gray-400">({totalReviews})</span>
         </div>
     );
+};
+
+const [openModal, setOpenModal] = useState(false);
+
+{
+    openModal && (
+        <CustomizationModal
+            item={item}
+            open={openModal}
+            onClose={() => setOpenModal(false)}
+            onAddToOrder={(item, customizations) => {
+                handleAddToTable({ ...item, customizations });
+                setOpenModal(false);
+            }}
+        />
+    )
+}
+
+const handleAddToTable = (item) => {
+    // Extract customizations if they exist
+    const customizations = item.customizations;
+
+    // Dispatch the item to the order context
+    dispatch({
+        type: "ADD_ITEM",
+        payload: item
+    });
+
+    // Show success toast with more details if customized
+    toast({
+        title: "Added to Order",
+        description: customizations
+            ? `${item.name} × ${customizations.quantity} added${customizations.removedIngredients.length > 0 ? ' with modifications' : ''}`
+            : `${item.name} added to your order.`,
+        variant: "default",
+    });
 }; 
