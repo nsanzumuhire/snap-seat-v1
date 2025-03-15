@@ -1,19 +1,32 @@
-import { 
-  Restaurant, InsertRestaurant,
-  WaitlistSignup, InsertWaitlist,
-  MenuItem, InsertMenuItem,
-  TableBooking, InsertBooking,
-  Review, InsertReview
+import {
+  Restaurant,
+  WaitlistSignup,
+  MenuItem,
+  TableBooking,
+  Review,
+  insertRestaurantSchema,
+  insertWaitlistSchema,
+  insertMenuItemSchema,
+  insertTableBookingSchema,
+  insertReviewSchema,
+  insertBookingSchema
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { restaurants, menuItems, waitlistSignups, tableBookings, reviews } from "@shared/schema";
 
+// Define zod schema types for type safety
+export type InsertRestaurant = typeof insertRestaurantSchema._type;
+export type InsertWaitlist = typeof insertWaitlistSchema._type;
+export type InsertMenuItem = typeof insertMenuItemSchema._type;
+export type InsertBooking = typeof insertBookingSchema._type;
+export type InsertReview = typeof insertReviewSchema._type;
+
 export interface IStorage {
   // Restaurant methods
   createRestaurant(restaurant: InsertRestaurant): Promise<Restaurant>;
   getRestaurants(): Promise<Restaurant[]>;
-  getRestaurantById(id: number): Promise<Restaurant | undefined>;
+  getRestaurantById(id: string): Promise<Restaurant | undefined>;
 
   // Waitlist methods
   createWaitlistSignup(signup: InsertWaitlist): Promise<WaitlistSignup>;
@@ -21,19 +34,19 @@ export interface IStorage {
 
   // Menu methods
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
-  getMenuItems(restaurantId: number): Promise<MenuItem[]>;
-  getMenuItemById(id: number): Promise<MenuItem | undefined>;
+  getMenuItems(restaurantId: string): Promise<MenuItem[]>;
+  getMenuItemById(id: string): Promise<MenuItem | undefined>;
 
   // Booking methods
   createBooking(booking: InsertBooking): Promise<TableBooking>;
-  getBookings(restaurantId: number): Promise<TableBooking[]>;
-  getBookingById(id: number): Promise<TableBooking | undefined>;
+  getBookings(restaurantId: string): Promise<TableBooking[]>;
+  getBookingById(id: string): Promise<TableBooking | undefined>;
 
   // Review methods
   createReview(review: InsertReview): Promise<Review>;
-  getReviews(restaurantId: number): Promise<Review[]>;
-  getMenuItemReviews(menuItemId: number): Promise<Review[]>;
-  getBookingReviews(bookingId: number): Promise<Review[]>;
+  getReviews(restaurantId: string): Promise<Review[]>;
+  getMenuItemReviews(menuItemId: string): Promise<Review[]>;
+  getBookingReviews(bookingId: string): Promise<Review[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -44,11 +57,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRestaurants(): Promise<Restaurant[]> {
-    return await db.select().from(restaurants);
+    console.log("Storage: fetching all restaurants");
+    const results = await db.select().from(restaurants);
+    console.log(`Storage: found ${results.length} restaurants`);
+    return results;
   }
 
-  async getRestaurantById(id: number): Promise<Restaurant | undefined> {
+  async getRestaurantById(id: string): Promise<Restaurant | undefined> {
+    console.log(`Storage: fetching restaurant with ID ${id}`);
     const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.id, id));
+    if (restaurant) {
+      console.log(`Storage: found restaurant ${restaurant.name}`);
+    } else {
+      console.log(`Storage: no restaurant found with ID ${id}`);
+    }
     return restaurant;
   }
 
@@ -68,11 +90,14 @@ export class DatabaseStorage implements IStorage {
     return newItem;
   }
 
-  async getMenuItems(restaurantId: number): Promise<MenuItem[]> {
-    return await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
+  async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
+    console.log(`Storage: fetching menu items for restaurant ${restaurantId}`);
+    const results = await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
+    console.log(`Storage: found ${results.length} menu items for restaurant ${restaurantId}`);
+    return results;
   }
 
-  async getMenuItemById(id: number): Promise<MenuItem | undefined> {
+  async getMenuItemById(id: string): Promise<MenuItem | undefined> {
     const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
     return item;
   }
@@ -83,11 +108,11 @@ export class DatabaseStorage implements IStorage {
     return newBooking;
   }
 
-  async getBookings(restaurantId: number): Promise<TableBooking[]> {
+  async getBookings(restaurantId: string): Promise<TableBooking[]> {
     return await db.select().from(tableBookings).where(eq(tableBookings.restaurantId, restaurantId));
   }
 
-  async getBookingById(id: number): Promise<TableBooking | undefined> {
+  async getBookingById(id: string): Promise<TableBooking | undefined> {
     const [booking] = await db.select().from(tableBookings).where(eq(tableBookings.id, id));
     return booking;
   }
@@ -102,9 +127,8 @@ export class DatabaseStorage implements IStorage {
       const avgRating = restaurantReviews.reduce((sum, r) => sum + r.rating, 0) / restaurantReviews.length;
 
       await db.update(restaurants)
-        .set({ 
-          rating: avgRating.toFixed(1), 
-          totalReviews: restaurantReviews.length 
+        .set({
+          totalReviews: restaurantReviews.length
         })
         .where(eq(restaurants.id, review.restaurantId));
     }
@@ -114,9 +138,9 @@ export class DatabaseStorage implements IStorage {
       const avgRating = menuItemReviews.reduce((sum, r) => sum + r.rating, 0) / menuItemReviews.length;
 
       await db.update(menuItems)
-        .set({ 
-          totalRating: avgRating.toFixed(1), 
-          totalReviews: menuItemReviews.length 
+        .set({
+          totalRating: avgRating.toFixed(1),
+          totalReviews: menuItemReviews.length
         })
         .where(eq(menuItems.id, review.menuItemId));
     }
@@ -124,18 +148,17 @@ export class DatabaseStorage implements IStorage {
     return newReview;
   }
 
-  async getReviews(restaurantId: number): Promise<Review[]> {
+  async getReviews(restaurantId: string): Promise<Review[]> {
     return await db.select().from(reviews)
-      .where(eq(reviews.restaurantId, restaurantId))
-      .where(eq(reviews.menuItemId, null));
+      .where(eq(reviews.restaurantId, restaurantId));
   }
 
-  async getMenuItemReviews(menuItemId: number): Promise<Review[]> {
+  async getMenuItemReviews(menuItemId: string): Promise<Review[]> {
     return await db.select().from(reviews)
       .where(eq(reviews.menuItemId, menuItemId));
   }
 
-  async getBookingReviews(bookingId: number): Promise<Review[]> {
+  async getBookingReviews(bookingId: string): Promise<Review[]> {
     return await db.select().from(reviews)
       .where(eq(reviews.bookingId, bookingId));
   }

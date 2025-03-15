@@ -1,14 +1,22 @@
 import { defineConfig } from "drizzle-kit";
+import * as dotenv from 'dotenv';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
-}
+// Load environment variables from .env file
+dotenv.config();
+
+// Parse the connection string to get credentials
+const dbUrl = new URL(process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/postgres");
 
 export default defineConfig({
-  out: "./migrations",
   schema: "./shared/schema.ts",
+  out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
-  },
+    host: dbUrl.hostname,
+    user: dbUrl.username,
+    password: dbUrl.password,
+    database: dbUrl.pathname.substring(1), // Remove leading slash
+    port: Number(dbUrl.port) || 5432,
+    ssl: false,
+  }
 });

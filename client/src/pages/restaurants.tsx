@@ -2,14 +2,15 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { 
-  Card, 
-  CardContent, 
-  CardFooter 
+import { apiRequest } from "@/lib/queryClient";
+import {
+  Card,
+  CardContent,
+  CardFooter
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Search,
   Star,
   Clock,
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 
 interface RestaurantCard {
-  id: number;
+  id: string;
   name: string;
   description: string;
   cuisine: string;
@@ -30,16 +31,30 @@ interface RestaurantCard {
   openingHours: string;
 }
 
+const API_URL = 'http://localhost:5000';
+
 export default function Restaurants() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: restaurants = [] } = useQuery<RestaurantCard[]>({
+  const { data: restaurants = [], isLoading, error } = useQuery < RestaurantCard[] > ({
     queryKey: ["/api/restaurants"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/restaurants");
+      return response.json();
+    }
   });
 
-  const filteredRestaurants = restaurants.filter(restaurant => 
+  const filteredRestaurants = restaurants.filter(restaurant =>
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading restaurants...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">Error loading restaurants: {error.message}</div>;
+  }
 
   return (
     <motion.div

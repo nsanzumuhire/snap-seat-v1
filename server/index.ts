@@ -1,8 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from 'cors';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -22,13 +24,18 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        if (Array.isArray(capturedJsonResponse)) {
+          logLine += ` :: ${capturedJsonResponse.length} items`;
+          if (capturedJsonResponse.length > 0) {
+            logLine += ` (first id: ${capturedJsonResponse[0].id})`;
+          }
+        } else {
+          logLine += ` :: ${JSON.stringify(capturedJsonResponse).substring(0, 100)}`;
+          if (JSON.stringify(capturedJsonResponse).length > 100) {
+            logLine += "...";
+          }
+        }
       }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
       log(logLine);
     }
   });
@@ -37,47 +44,41 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
-  });
+      res.status(status).json({ message });
+      log(`Error: ${message}`);
+    });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+    // importantly only setup vite in development and after
+    // setting up all the other routes so the catch-all route
+    // doesn't interfere with the other routes
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
 
-  // Try to use port 5000, but fall back to other ports if needed
-  let port = 5000;
-  const maxPortAttempts = 10;
-  
-  // Function to try listening on a port
-  const startServer = (attemptPort: number, attemptCount = 0) => {
-    server.listen({
-      port: attemptPort,
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      log(`serving on port ${attemptPort}`);
+    // Use fixed port 5000 only, exit if not available
+    const PORT = 5000;
+
+    server.listen(PORT, '0.0.0.0', () => {
+      log(`Server running at http://localhost:${PORT}`);
     }).on('error', (err: any) => {
-      if (err.code === 'EADDRINUSE' && attemptCount < maxPortAttempts) {
-        log(`Port ${attemptPort} is in use, trying ${attemptPort + 1}...`);
-        startServer(attemptPort + 1, attemptCount + 1);
+      if (err.code === 'EADDRINUSE') {
+        log(`Port ${PORT} is already in use. Exiting...`);
+        process.exit(1);
       } else {
         log(`Failed to start server: ${err.message}`);
-        throw err;
       }
     });
-  };
-
-  startServer(port);
+  } catch (error) {
+    log(`Error during server startup: ${error}`);
+    process.exit(1);
+  }
 })();

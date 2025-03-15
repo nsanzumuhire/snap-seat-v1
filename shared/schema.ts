@@ -1,9 +1,11 @@
-import { pgTable, text, serial, integer, timestamp, decimal } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { pgTable, text, timestamp, integer, boolean, varchar } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { createId } from '@paralleldrive/cuid2';
 
 export const restaurants = pgTable("restaurants", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey().notNull().$defaultFn(() => createId()),
   name: text("name").notNull(),
   description: text("description").notNull(),
   cuisine: text("cuisine").notNull(),
@@ -13,132 +15,144 @@ export const restaurants = pgTable("restaurants", {
   email: text("email").notNull(),
   imageUrl: text("image_url"),
   openingHours: text("opening_hours").notNull(),
-  rating: decimal("rating").notNull().default("0"),
-  totalReviews: integer("total_reviews").notNull().default(0),
 });
 
+export const restaurantsRelations = relations(restaurants, ({ many }) => ({
+  menuItems: many(menuItems),
+  reviews: many(reviews),
+  tableBookings: many(tableBookings),
+}));
+
 export const waitlistSignups = pgTable("waitlist_signups", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey().notNull().$defaultFn(() => createId()),
   email: text("email").notNull(),
   restaurantName: text("restaurant_name").notNull(),
   size: integer("size").notNull(),
 });
 
 export const menuItems = pgTable("menu_items", {
-  id: serial("id").primaryKey(),
-  restaurantId: integer("restaurant_id").notNull(),
+  id: text("id").primaryKey().notNull().$defaultFn(() => createId()),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  price: decimal("price").notNull(),
+  price: text("price").notNull(),
   category: text("category").notNull(),
   imageUrl: text("image_url"),
-  available: integer("available").notNull().default(1),
-  prepTime: integer("prep_time").notNull(), // in minutes
-  totalRating: decimal("total_rating").notNull().default("0"),
-  totalReviews: integer("total_reviews").notNull().default(0),
+  available: boolean("available").default(true),
+  prepTime: integer("prep_time").default(15),
+  totalRating: text("total_rating").default("0"),
+  totalReviews: integer("total_reviews").default(0),
+  restaurantId: text("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  tags: text("tags"),
 });
 
+export const menuItemsRelations = relations(menuItems, ({ one, many }) => ({
+  restaurant: one(restaurants, {
+    fields: [menuItems.restaurantId],
+    references: [restaurants.id],
+  }),
+  reviews: many(reviews),
+}));
+
 export const tableBookings = pgTable("table_bookings", {
-  id: serial("id").primaryKey(),
-  restaurantId: integer("restaurant_id").notNull(),
-  date: timestamp("date").notNull(),
-  time: text("time").notNull(),
-  partySize: integer("party_size").notNull(),
+  id: text("id").primaryKey().notNull().$defaultFn(() => createId()),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
   customerPhone: text("customer_phone").notNull(),
+  date: timestamp("date").notNull(),
+  time: text("time").notNull(),
+  partySize: integer("party_size").notNull(),
+  status: text("status").default("pending"),
+  restaurantId: text("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   specialRequests: text("special_requests"),
-  status: text("status").notNull().default("pending"),
 });
+
+export const tableBookingsRelations = relations(tableBookings, ({ one }) => ({
+  restaurant: one(restaurants, {
+    fields: [tableBookings.restaurantId],
+    references: [restaurants.id],
+  }),
+}));
 
 export const reviews = pgTable("reviews", {
-  id: serial("id").primaryKey(),
-  restaurantId: integer("restaurant_id").notNull(),
-  menuItemId: integer("menu_item_id"),
+  id: text("id").primaryKey().notNull().$defaultFn(() => createId()),
   rating: integer("rating").notNull(),
   comment: text("comment"),
+  date: timestamp("date").defaultNow(),
   customerName: text("customer_name").notNull(),
-  date: timestamp("date").notNull().defaultNow(),
-  bookingId: integer("booking_id"),
+  restaurantId: text("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  menuItemId: text("menu_item_id").references(() => menuItems.id, { onDelete: "cascade" }),
 });
 
-export const insertRestaurantSchema = createInsertSchema(restaurants).pick({
-  name: true,
-  description: true,
-  cuisine: true,
-  priceRange: true,
-  address: true,
-  phone: true,
-  email: true,
-  imageUrl: true,
-  openingHours: true,
-}).extend({
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
-  priceRange: z.enum(["$", "$$", "$$$", "$$$$"]),
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  restaurant: one(restaurants, {
+    fields: [reviews.restaurantId],
+    references: [restaurants.id],
+  }),
+  menuItem: one(menuItems, {
+    fields: [reviews.menuItemId],
+    references: [menuItems.id],
+  }),
+}));
+
+// Zod Schemas for validation
+export const insertRestaurantSchema = createInsertSchema(restaurants, {
+  name: z.string().min(1).max(100),
+  description: z.string().min(10),
+  cuisine: z.string().min(1),
+  priceRange: z.string().min(1),
+  address: z.string().min(5),
+  phone: z.string().min(5),
+  email: z.string().email(),
+  imageUrl: z.string().url().nullable().optional(),
+  openingHours: z.string().min(1),
 });
 
-export const insertWaitlistSchema = createInsertSchema(waitlistSignups).pick({
-  email: true,
-  restaurantName: true,
-  size: true,
-}).extend({
+export const insertWaitlistSchema = createInsertSchema(waitlistSignups, {
   email: z.string().email("Please enter a valid email address"),
   restaurantName: z.string().min(2, "Restaurant name must be at least 2 characters"),
-  size: z.number().min(1, "Size must be at least 1").max(1000, "Size must be less than 1000")
+  size: z.number().int().min(1, "Size must be at least 1").max(100, "Size must be less than 100")
 });
 
-export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
-  restaurantId: true,
-  name: true,
-  description: true,
-  price: true,
-  category: true,
-  imageUrl: true,
-  available: true,
-  prepTime: true,
-}).extend({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  price: z.number().min(0, "Price must be positive"),
-  category: z.string().min(2, "Category must be at least 2 characters"),
-  prepTime: z.number().min(1, "Preparation time must be at least 1 minute"),
+export const insertMenuItemSchema = createInsertSchema(menuItems, {
+  name: z.string().min(1).max(100),
+  description: z.string().min(5),
+  price: z.string(),
+  category: z.string().min(1),
+  imageUrl: z.string().url().nullable().optional(),
+  available: z.boolean().default(true),
+  prepTime: z.number().int().min(0).default(15),
+  totalRating: z.string().default("0"),
+  totalReviews: z.number().int().default(0),
+  restaurantId: z.string(),
+  tags: z.string().optional(),
 });
 
-export const insertBookingSchema = createInsertSchema(tableBookings).pick({
-  restaurantId: true,
-  date: true,
-  time: true,
-  partySize: true,
-  customerName: true,
-  customerEmail: true,
-  customerPhone: true,
-  specialRequests: true,
-}).extend({
-  customerEmail: z.string().email("Please enter a valid email address"),
-  partySize: z.number().min(1, "Party size must be at least 1").max(20, "Party size cannot exceed 20"),
-  customerPhone: z.string().min(10, "Please enter a valid phone number"),
+export const insertTableBookingSchema = createInsertSchema(tableBookings, {
+  customerName: z.string().min(1).max(100),
+  customerEmail: z.string().email(),
+  customerPhone: z.string().min(5),
+  date: z.date(),
+  time: z.string().min(1),
+  partySize: z.number().int().min(1),
+  status: z.string().default("pending"),
+  restaurantId: z.string(),
+  specialRequests: z.string().optional(),
 });
 
-export const insertReviewSchema = createInsertSchema(reviews).pick({
-  restaurantId: true,
-  menuItemId: true,
-  rating: true,
-  comment: true,
-  customerName: true,
-  bookingId: true,
-}).extend({
-  rating: z.number().min(1, "Rating must be between 1 and 5").max(5, "Rating must be between 1 and 5"),
-  comment: z.string().min(10, "Comment must be at least 10 characters"),
+// Add alias for backward compatibility
+export const insertBookingSchema = insertTableBookingSchema;
+
+export const insertReviewSchema = createInsertSchema(reviews, {
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().optional(),
+  date: z.date().default(new Date()),
+  customerName: z.string().min(1),
+  restaurantId: z.string(),
+  menuItemId: z.string().optional(),
 });
 
 export type Restaurant = typeof restaurants.$inferSelect;
-export type InsertRestaurant = z.infer<typeof insertRestaurantSchema>;
-export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
-export type WaitlistSignup = typeof waitlistSignups.$inferSelect;
 export type MenuItem = typeof menuItems.$inferSelect;
-export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type TableBooking = typeof tableBookings.$inferSelect;
-export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type Review = typeof reviews.$inferSelect;
-export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type WaitlistSignup = typeof waitlistSignups.$inferSelect;

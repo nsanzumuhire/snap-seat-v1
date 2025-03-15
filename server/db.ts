@@ -1,15 +1,21 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
+import * as dotenv from 'dotenv';
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
-neonConfig.webSocketConstructor = ws;
+// Load environment variables from .env file
+dotenv.config();
 
-if (!process.env.DATABASE_URL) {
+// Get database URL from environment variable or set a default
+const databaseUrl = process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/postgres";
+
+if (!databaseUrl) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "DATABASE_URL must be set. Did you forget to provision a database?"
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+// Create postgres client
+const client = postgres(databaseUrl);
+
+// Create drizzle database instance
+export const db = drizzle(client);

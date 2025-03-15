@@ -4,28 +4,21 @@ import { useTableOrder } from "@/lib/tableOrderContext";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Link, useLocation } from "wouter";
 import {
   MinusCircle,
   PlusCircle,
   Trash2,
-  QrCode,
-  Split,
-  Table as TableIcon,
-  Send,
   Clock,
-  Minus,
-  Plus
+  ShoppingBag,
+  ChevronLeft,
+  Receipt,
+  Utensils,
+  DollarSign
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 type TableOrderProps = {
   embedded?: boolean;
@@ -34,6 +27,7 @@ type TableOrderProps = {
 export default function TableOrder({ embedded = false }: TableOrderProps) {
   const { state, dispatch } = useTableOrder();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const handleQuantityChange = (id: number, change: number) => {
     const item = state.items.find(i => i.id === id);
@@ -50,219 +44,171 @@ export default function TableOrder({ embedded = false }: TableOrderProps) {
     }
   };
 
-  const handleSubmitOrder = () => {
-    toast({
-      title: "Order submitted",
-      description: "Your order has been sent to the kitchen",
-    });
+  const handleCheckout = () => {
+    navigate("/checkout");
   };
+
+  const totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
 
   if (embedded) {
     return (
-      <div className="bg-white">
-        <div className="flex flex-col md:flex-row">
-          <div className="flex-1 md:ml-4"> {/* Right Column - Table Order */}
-
-            <div className="space-y-4">
-              <AnimatePresence>
-                {state.items.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                  >
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-semibold">{item.name}</h3>
-                            <p className="text-sm text-gray-600">
-                              ${Number(item.price).toFixed(2)} each
-                            </p>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{item.prepTime} mins prep time</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleQuantityChange(item.id, -1)}
-                            >
-                              <MinusCircle className="h-4 w-4" />
-                            </Button>
-                            <span className="w-8 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleQuantityChange(item.id, 1)}
-                            >
-                              <PlusCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+      <Card className="bg-white shadow-sm border-gray-100">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+              <h2 className="font-semibold text-lg">Your Order</h2>
             </div>
-            {state.items.length > 0 ? (
-              <div className="mt-6 space-y-4">
-                <Card className="mt-1">
-                  <CardContent className="p-2">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span>Total</span>
-                        <span>${state.total.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>Tax (10%)</span>
-                        <span>${(state.total * 0.1).toFixed(2)}</span>
-                      </div>
-                      <Separator className="my-0.5" />
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span>Order Total</span>
-                        <span>${(state.total * 1.1).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="px-2 py-1.5 flex gap-1">
-                    <Button
-                      size="sm"
-                      className="w-full text-xs py-0 h-6"
-                      onClick={handleSubmitOrder}
-                      disabled={state.items.length === 0}
-                    >
-                      <Send className="mr-1 h-3 w-3" />
-                      Submit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs py-0 h-6"
-                      onClick={() => dispatch({ type: "CLEAR_ORDER" })}
-                    >
-                      Clear
-                    </Button>
-                  </CardFooter>
-                </Card>
-
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                Your table order is empty. Add items from the menu to get started.
-              </div>
+            {totalItems > 0 && (
+              <Badge variant="secondary" className="rounded-full">
+                {totalItems} {totalItems === 1 ? 'item' : 'items'}
+              </Badge>
             )}
           </div>
+        </CardHeader>
+
+        <div className="px-4">
+          <div className="space-y-2">
+            <AnimatePresence>
+              {state.items.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  className="group"
+                >
+                  <div className="flex items-center gap-3 py-2 border-b border-gray-100">
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Utensils className="h-4 w-4 text-gray-400" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <div className="min-w-0 pr-2 flex-1">
+                          <h3 className="font-medium text-sm truncate">{item.name}</h3>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>${Number(item.price).toFixed(2)}</span>
+                            {item.prepTime > 0 && (
+                              <>
+                                <span>•</span>
+                                <Clock className="h-3 w-3" />
+                                <span>{item.prepTime}m</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleQuantityChange(item.id, -1)}
+                          >
+                            <MinusCircle className="h-3 w-3" />
+                          </Button>
+                          <span className="w-5 text-center text-xs font-medium">{item.quantity}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleQuantityChange(item.id, 1)}
+                          >
+                            <PlusCircle className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-red-500"
+                            onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {state.items.length > 0 ? (
+            <div className="py-4 space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span>${state.total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax (10%)</span>
+                  <span>${(state.total * 0.1).toFixed(2)}</span>
+                </div>
+                <Separator className="my-2" />
+                <div className="flex justify-between font-medium">
+                  <span>Total</span>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="text-lg">{(state.total * 1.1).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-6 gap-2">
+                <Button
+                  size="sm"
+                  className="col-span-4"
+                  onClick={handleCheckout}
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  Checkout
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="col-span-2"
+                  onClick={() => dispatch({ type: "CLEAR_ORDER" })}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <ShoppingBag className="h-12 w-12 text-gray-300 mb-2" />
+              <p className="text-gray-500 mb-4">Your order is empty</p>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/menu">Browse Menu</Link>
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
+      </Card>
     );
   } else {
     return (
-      <div className="flex flex-col h-full">
-
-        {/* Order Items */}
-        <div className="space-y-4">
-          <AnimatePresence>
-            {state.items.length > 0 ? (
-              <div className="space-y-4">
-                <div className="max-h-[400px] overflow-y-auto">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {state.items.map((item) => (
-                        <tr key={item.id} className="border-b">
-                          <td className="py-1.5">
-                            <div className="font-medium text-xs">{item.name}</div>
-                            <div className="text-xs text-muted-foreground">${typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price).toFixed(2)}</div>
-                          </td>
-                          <td className="text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-5 w-5"
-                                onClick={() => handleQuantityChange(item.id, -1)}
-                              >
-                                <Minus className="h-2.5 w-2.5" />
-                              </Button>
-                              <span className="w-3 text-center text-xs">{item.quantity}</span>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-5 w-5"
-                                onClick={() => handleQuantityChange(item.id, 1)}
-                              >
-                                <Plus className="h-2.5 w-2.5" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                Your table order is empty. Add items from the menu to get started.
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
-        {state.items.length > 0 ? (
-          <Card className="mt-1">
-            <CardContent className="p-2">
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span>Total</span>
-                  <span>${state.total.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Tax (10%)</span>
-                  <span>${(state.total * 0.1).toFixed(2)}</span>
-                </div>
-                <Separator className="my-0.5" />
-                <div className="flex justify-between text-xs font-semibold">
-                  <span>Order Total</span>
-                  <span>${(state.total * 1.1).toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="px-2 py-1.5 flex gap-1">
-              <Button
-                size="sm"
-                className="w-full text-xs py-0 h-6"
-                onClick={handleSubmitOrder}
-                disabled={state.items.length === 0}
-              >
-                <Send className="mr-1 h-3 w-3" />
-                Submit
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full text-xs py-0 h-6"
-                onClick={() => dispatch({ type: "CLEAR_ORDER" })}
-              >
-                Clear
-              </Button>
-            </CardFooter>
-          </Card>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            Your table order is empty. Add items from the menu to get started.
-          </div>
-        )}
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button
+          size="sm"
+          className="rounded-full shadow-lg"
+          onClick={handleCheckout}
+        >
+          <ShoppingBag className="mr-2 h-4 w-4" />
+          <span className="mr-1">Order</span>
+          {totalItems > 0 && (
+            <Badge variant="secondary" className="rounded-full">
+              {totalItems}
+            </Badge>
+          )}
+        </Button>
       </div>
     );
   }
