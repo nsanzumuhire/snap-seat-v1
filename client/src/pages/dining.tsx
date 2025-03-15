@@ -137,17 +137,16 @@ export default function DiningPage() {
             {/* Left Column - Restaurant Info */}
             <Card className="lg:col-span-3 p-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid grid-cols-3 mb-8">
-                  <TabsTrigger value="menu" className="flex items-center justify-center gap-1.5">
+                <TabsList className="grid grid-cols-3 mb-8 bg-gray-100 rounded-md">
+                  <TabsTrigger value="menu" className={`flex items-center justify-center gap-1.5 ${activeTab === "menu" ? "!text-primary !bg-accent" : ""}`}>
                     <Utensils className="h-4 w-4" />
                     <span>Menu</span>
                   </TabsTrigger>
-                  <TabsTrigger value="reviews" className="flex items-center justify-center gap-1.5">
+                  <TabsTrigger value="reviews" className={`flex items-center justify-center gap-1.5 ${activeTab === "reviews" ? "!text-primary !bg-accent" : ""}`}>
                     <Star className="h-4 w-4" />
                     <span>Reviews</span>
-                    <span className="ml-1 text-xs text-gray-500">({restaurant.totalReviews})</span>
                   </TabsTrigger>
-                  <TabsTrigger value="details" className="flex items-center justify-center gap-1.5">
+                  <TabsTrigger value="details" className={`flex items-center justify-center gap-1.5 ${activeTab === "details" ? "!text-primary !bg-accent" : ""}`}>
                     <Info className="h-4 w-4" />
                     <span>Details</span>
                   </TabsTrigger>
