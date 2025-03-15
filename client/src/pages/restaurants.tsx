@@ -15,7 +15,9 @@ import {
   Star,
   Clock,
   DollarSign,
-  MapPin
+  MapPin,
+  Utensils,
+  CalendarDays
 } from "lucide-react";
 
 interface RestaurantCard {
@@ -35,11 +37,18 @@ const API_URL = 'http://localhost:5000';
 
 export default function Restaurants() {
   const [searchQuery, setSearchQuery] = useState("");
+
   const { data: restaurants = [], isLoading, error } = useQuery < RestaurantCard[] > ({
     queryKey: ["/api/restaurants"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/restaurants");
-      return response.json();
+      try {
+        const response = await apiRequest("GET", "/api/restaurants");
+        const data = await response.json();
+        return data;
+      } catch (err) {
+        console.error('Error fetching restaurants:', err);
+        throw err;
+      }
     }
   });
 
@@ -49,11 +58,22 @@ export default function Restaurants() {
   );
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading restaurants...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          Loading restaurants...
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Error loading restaurants: {error.message}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        Error loading restaurants: {error.message}
+      </div>
+    );
   }
 
   return (
@@ -92,52 +112,60 @@ export default function Restaurants() {
                   alt={restaurant.name}
                   className="object-cover w-full h-full transform hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute top-4 right-4 bg-white px-2 py-1 rounded-full flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-medium">
-                    {restaurant.rating} ({restaurant.totalReviews})
-                  </span>
-                </div>
               </div>
 
               <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold">{restaurant.name}</h3>
-                  <span className="text-primary font-medium">
-                    {restaurant.priceRange}
-                  </span>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-semibold truncate flex-1 pr-2">{restaurant.name}</h3>
+                  <div className="flex items-center gap-1 text-xs whitespace-nowrap">
+                    <Star className="h-3 w-3 flex-shrink-0 fill-yellow-400 text-yellow-400" />
+                    <span>{Number(restaurant.rating || 0).toFixed(1)}</span>
+                    <span className="text-gray-400">({restaurant.totalReviews || 0})</span>
+                  </div>
                 </div>
 
-                <p className="text-gray-600 mb-4 line-clamp-2">
+                <p className="text-gray-600 mb-4 line-clamp-2 min-h-[3rem]">
                   {restaurant.description}
                 </p>
 
                 <div className="space-y-2 text-sm text-gray-500">
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {restaurant.address}
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate flex-1">{restaurant.address}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    {restaurant.openingHours}
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate flex-1">{restaurant.openingHours}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 flex-shrink-0" />
+                    <span>{restaurant.priceRange}</span>
                   </div>
                 </div>
               </CardContent>
 
-              <CardFooter className="px-6 pb-6 pt-0 flex gap-4">
-                <Button asChild className="flex-1">
+              <CardFooter className="px-6 pb-6 pt-0 flex gap-2">
+                <Button asChild size="sm" className="h-8">
                   <Link href={`/restaurants/${restaurant.id}/menu`}>
-                    View Menu
+                    <Utensils className="h-4 w-4 mr-1" />
+                    Menu
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="flex-1">
+                <Button asChild size="sm" variant="outline" className="h-8">
                   <Link href={`/restaurants/${restaurant.id}/book`}>
-                    Book Table
+                    <CalendarDays className="h-4 w-4 mr-1" />
+                    Make Reservation
                   </Link>
                 </Button>
               </CardFooter>
             </Card>
           ))}
+
+          {filteredRestaurants.length === 0 && (
+            <div className="col-span-full py-12 text-center text-gray-500">
+              No restaurants found matching your search.
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
